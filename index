@@ -1,0 +1,224 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPTV</title>
+  <script src="vendor/hls.min.js"></script>
+  <script type="module" crossorigin src="/assets/newtab-nuzUXFet.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/storage-AgxdOOzY.js">
+  <link rel="stylesheet" crossorigin href="/assets/storage-Bkko8Uw4.css">
+</head>
+<body>
+  <div class="app-shell" id="app">
+    <!-- Sidebar -->
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">▶</div>
+        <span class="sidebar-brand-name">IPTV</span>
+      </div>
+
+      <a href="https://wa.me/12763004527?text=Hi%20IPTV%20team%20%2C%20i%20need%204K%20version" target="_blank" style="display: flex; align-items: center; gap: 6px; padding: 6px 16px 10px; font-size: 0.72rem; color: var(--text-secondary); text-decoration: none; border-bottom: 1px solid var(--border);">
+        <span style="font-size: 0.9rem;">💬</span>
+        <span>For <strong style="color: #22c55e;">4K</strong> experience</span>
+      </a>
+
+      <div class="sidebar-search">
+        <input type="text" id="search-input" placeholder="Search channels..." autocomplete="off" />
+      </div>
+
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <div class="nav-section-title">Playlists</div>
+        <div id="playlist-list"></div>
+        <button class="nav-item" id="add-playlist-btn">
+          <span class="nav-item-icon">➕</span>
+          <span>Add Source</span>
+        </button>
+
+        <div class="nav-section-title">Channels</div>
+        <button class="nav-item active" data-view="channels" id="nav-channels">
+          <span class="nav-item-icon">📺</span>
+          <span>All Channels</span>
+          <span class="nav-item-count" id="channel-count">0</span>
+        </button>
+        <button class="nav-item" data-view="favorites" id="nav-favorites">
+          <span class="nav-item-icon">⭐</span>
+          <span>Favorites</span>
+        </button>
+        <button class="nav-item" data-view="recent" id="nav-recent">
+          <span class="nav-item-icon">🕐</span>
+          <span>Recently Viewed</span>
+        </button>
+
+        <div class="nav-section-title">Categories</div>
+        <div id="category-list"></div>
+      </nav>
+
+      <!-- Now Playing -->
+      <div class="now-playing" id="now-playing" style="display: none;">
+        <div class="now-playing-thumb" id="now-playing-thumb"></div>
+        <div class="now-playing-info">
+          <div class="now-playing-title truncate" id="now-playing-title">—</div>
+          <div class="now-playing-subtitle truncate" id="now-playing-group">—</div>
+        </div>
+        <span class="badge badge-live" id="now-playing-badge" style="display: none;">LIVE</span>
+      </div>
+    </aside>
+
+    <!-- Header -->
+    <header class="app-header">
+      <h1 style="font-size: 1rem; font-weight: 600;" id="view-title">All Channels</h1>
+      <div style="flex: 1;"></div>
+      <button class="btn btn-secondary" id="header-settings-btn">⚙ Settings</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-content" id="main-content">
+      <!-- Empty state (shown when no playlists) -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-state-icon">📡</div>
+        <h2 class="empty-state-title">Welcome to IPTV</h2>
+        <p class="empty-state-desc">Add an M3U playlist URL, upload a file, or connect to an Xtream Codes server to get started.</p>
+        <button class="btn btn-primary" id="empty-add-btn">➕ Add Source</button>
+      </div>
+
+      <!-- Player area (shown when playing) -->
+      <div id="player-area" style="display: none;">
+        <div class="player-container" id="player-container">
+          <video id="video-player" playsinline></video>
+          <div class="player-controls">
+            <button class="btn-icon" id="ctrl-play" title="Play/Pause">⏯</button>
+            <span class="player-time" id="ctrl-time">0:00</span>
+            <div class="player-progress" id="ctrl-progress">
+              <div class="player-progress-fill" id="ctrl-progress-fill" style="width: 0%;"></div>
+            </div>
+            <button class="btn-icon" id="ctrl-mute" title="Mute">🔊</button>
+            <div class="player-volume" id="ctrl-volume">
+              <div class="player-progress-fill" id="ctrl-volume-fill" style="width: 80%;"></div>
+            </div>
+            <button class="btn-icon" id="ctrl-fullscreen" title="Fullscreen">⛶</button>
+          </div>
+        </div>
+        <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <h2 id="playing-title" style="font-size: 1.1rem; font-weight: 600;">—</h2>
+            <p id="playing-group" style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">—</p>
+          </div>
+          <button class="btn btn-secondary" id="btn-hide-player" title="Hide player and view channels">📺 Show Channels</button>
+        </div>
+      </div>
+
+      <!-- Channel grid (shown when browsing) -->
+      <div id="channel-grid" style="display: none;">
+        <div class="channel-list" id="channel-list-container"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Source Modal -->
+  <div class="modal-backdrop" id="add-modal" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Add Source</span>
+        <button class="btn-icon" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-tabs" id="source-tabs">
+          <button class="form-tab active" data-tab="url">M3U URL</button>
+          <button class="form-tab" data-tab="file">File Upload</button>
+          <button class="form-tab" data-tab="xtream">Xtream</button>
+        </div>
+
+        <!-- URL Tab -->
+        <div id="tab-url">
+          <div class="form-group">
+            <label class="form-label">Playlist Name (optional)</label>
+            <input type="text" class="form-input" id="input-name" placeholder="My Playlist" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">M3U / M3U8 URL</label>
+            <input type="url" class="form-input" id="input-url" placeholder="https://example.com/playlist.m3u" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">User-Agent (optional)</label>
+            <input type="text" class="form-input" id="input-useragent" placeholder="Custom User-Agent" />
+          </div>
+        </div>
+
+        <!-- File Tab -->
+        <div id="tab-file" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Select M3U File</label>
+            <input type="file" class="form-input" id="input-file" accept=".m3u,.m3u8,.txt" />
+          </div>
+        </div>
+
+        <!-- Xtream Tab -->
+        <div id="tab-xtream" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">Server URL</label>
+            <input type="url" class="form-input" id="xt-server" placeholder="http://server.com:port" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-input" id="xt-username" placeholder="username" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="xt-password" placeholder="password" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-save">Add Source</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop" id="settings-modal" style="display: none;">
+    <div class="modal" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙ Settings</h3>
+        <button class="modal-close" id="settings-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+            <div>
+              <div style="font-weight: 500;">Autoplay Streams</div>
+              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">Start video automatically when clicking a channel</div>
+            </div>
+            <input type="checkbox" id="setting-autoplay" style="width: 18px; height: 18px; cursor: pointer;" />
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-weight: 500;">Default Volume</label>
+            <span id="setting-volume-label" style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">80%</span>
+          </div>
+          <input type="range" id="setting-volume" min="0" max="100" value="80" style="width: 100%; cursor: pointer;" />
+        </div>
+
+        <div style="padding-top: 16px; border-top: 1px solid var(--border);">
+          <div style="font-weight: 600; margin-bottom: 10px; font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 0.5px;">MAINTENANCE</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn btn-secondary" id="btn-refresh-playlist" style="width: 100%; justify-content: center; font-size: 0.85rem;">
+              🔄 Refresh Active Playlist Channels
+            </button>
+            <button class="btn btn-secondary" id="btn-clear-cache" style="width: 100%; justify-content: center; color: var(--error); border-color: rgba(239, 68, 68, 0.3); font-size: 0.85rem;">
+              🗑 Reset All Playlists & Data
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="settings-save">Done</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
